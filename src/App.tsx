@@ -14,7 +14,7 @@ interface Post {
 
 async function fetchPosts(): Promise<RemoteData<Error, Post[]>> {
   try {
-    const response = await fetch("https://jsojnplaceholder.typicode.com/posts");
+    const response = await fetch("https://jsonplaceholder.typicode.com/posts");
     if (!response.ok) throw await response.json();
     const data = await response.json();
     return { type: "SUCCESS", data: data };

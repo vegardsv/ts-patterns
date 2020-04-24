@@ -6,6 +6,25 @@ type RemoteData<E, D> =
   | { type: "FAILURE"; error: E }
   | { type: "SUCCESS"; data: D };
 
+function foldRemoteData<R, E, D>(
+  remoteData: RemoteData<E, D>,
+  notAsked: () => R,
+  loading: () => R,
+  failure: (error: E) => R,
+  success: (data: D) => R
+): R {
+  switch (remoteData.type) {
+    case "NOT_ASKED":
+      return notAsked();
+    case "LOADING":
+      return loading();
+    case "FAILURE":
+      return failure(remoteData.error);
+    case "SUCCESS":
+      return success(remoteData.data);
+  }
+}
+
 interface Post {
   id: string;
   title: string;
@@ -32,37 +51,19 @@ function App(): JSX.Element {
     setPosts({ type: "LOADING" });
     fetchPosts().then((remoteData) => setPosts(remoteData));
   };
-  switch (posts.type) {
-    case "NOT_ASKED":
-      return (
-        <div style={{ textAlign: "center" }}>
-          <div>Not asked for posts yet</div>
-          <button onClick={getPosts}>Fetch Posts</button>
-        </div>
-      );
-    case "LOADING":
-      return <div>Loading</div>;
-    case "FAILURE":
-      return <div>Something went wrong 😨</div>;
-    case "SUCCESS":
-      return (
-        <div>
-          {posts.data.map((post) => (
-            <article
-              key={post.id}
-              style={{
-                border: "1px solid darkgray",
-                margin: "1rem",
-                padding: "1rem",
-              }}
-            >
-              <h2>{post.title}</h2>
-              <div dangerouslySetInnerHTML={{ __html: post.body }}></div>
-            </article>
-          ))}
-        </div>
-      );
-  }
+
+  return foldRemoteData(
+    posts,
+    () => (
+      <div style={{ textAlign: "center" }}>
+        <div>Not asked for posts yet</div>
+        <button onClick={getPosts}>Fetch Posts</button>
+      </div>
+    ),
+    () => <p>Loading....</p>,
+    (error) => <p>{error}</p>,
+    (data) => <pre>{JSON.stringify(data, null, 2)}</pre>
+  );
 }
 
 export default App;
